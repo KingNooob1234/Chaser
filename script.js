@@ -420,7 +420,7 @@ function showRestartButton() {
   button.style.padding = "15px 30px";
   button.style.fontSize = "20px";
   button.style.background = "#fff";
-  button.style.colo = "#111";
+  button.style.color = "#111";
   button.style.border = "none";
   button.style.borderRadius = "10px";
   button.style.cursor = "pointer";
