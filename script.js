@@ -107,7 +107,7 @@ function showRestartButton() {
   const button = document.createElement("button");
   button.innerText = "Restart";
   button.style.position = "absolute";
-  button.style.top = "50%";
+  button.style.top = "60%"; // moved lower
   button.style.left = "50%";
   button.style.transform = "translate(-50%, -50%)";
   button.style.padding = "15px 30px";
@@ -118,9 +118,10 @@ function showRestartButton() {
   button.style.borderRadius = "10px";
   button.style.cursor = "pointer";
   button.onclick = () => {
-    location.reload(); // Restart the game
+    location.reload(); // Reload the page
   };
   document.body.appendChild(button);
 }
+
 
 gameLoop();
