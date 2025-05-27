@@ -10,8 +10,8 @@ let mouse = {
 };
 
 let chaser = {
-  x: 100,
-  y: 100,
+  x: canvas.width / 2,
+  y: canvas.height / 2,
   radius: 20,
   speed: 0.05,
   speedIncrement: 0.005
@@ -225,10 +225,19 @@ function triggerWinMode() {
   ballCracked = false;
   ballBroken = false;
 
-  for (let i = 0; i < 20; i++) {
+  const numCursors = 12; // Number of fake cursors
+  const radius = 150; // Radius of the circle where cursors will be placed
+  const centerX = canvas.width / 2;
+  const centerY = canvas.height / 2;
+
+  for (let i = 0; i < numCursors; i++) {
+    const angle = (i / numCursors) * Math.PI * 2;
+    const x = centerX + radius * Math.cos(angle);
+    const y = centerY + radius * Math.sin(angle);
+
     fakeCursors.push({
-      x: Math.random() * canvas.width,
-      y: Math.random() * canvas.height,
+      x: x,
+      y: y,
       clicked: false
     });
   }
@@ -403,24 +412,12 @@ function draw() {
       ctx.fillStyle = cursor.clicked ? "white" : "gray";
       ctx.fill();
       ctx.closePath();
-
-      ctx.font = "16px Arial";
-      ctx.fillStyle = "yellow";
-      ctx.fillText("Click!", cursor.x + 10, cursor.y);
     });
 
     ctx.fillStyle = "white";
-    ctx.font = "32px Arial";
+    ctx.font = "48px Arial";
     ctx.textAlign = "center";
-
-    if (ballBroken) {
-      ctx.fillText("🎉 YOU WON! 🎉", canvas.width / 2, canvas.height / 2);
-    } else if (ballCracked) {
-      ctx.fillText("The Ball Is Cracking...", canvas.width / 2, canvas.height / 2);
-    } else {
-      ctx.fillText("Click with the Cursors!", canvas.width / 2, canvas.height / 2 - 30);
-      ctx.fillText(`Clicks: ${clickCount}`, canvas.width / 2, canvas.height / 2 + 10);
-    }
+    ctx.fillText("CLICK!", canvas.width / 2, canvas.height / 2);
   }
 }
 
