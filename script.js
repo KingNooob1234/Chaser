@@ -197,7 +197,7 @@ function applyBlockEffect(block) {
   }
 
   // Check for win mode trigger:
-  if ((stealthActive || !cursorVisible) && shieldActive && paintMode) {
+  if (paintMode) {
     if (block.type === "swap" || block.type === "teleport") {
       triggerWinMode();
     }
