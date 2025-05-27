@@ -1,0 +1,32 @@
+name: Minify JS on Push
+
+on:
+  push:
+    branches:
+      - main   # Trigger the workflow when you push to the main branch
+
+jobs:
+  minify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '14'  # Use Node.js version 14 (or another version)
+
+      - name: Install Terser
+        run: npm install terser -g
+
+      - name: Minify script.js
+        run: terser script.js -o script.min.js -c -m
+
+      - name: Commit minified script
+        run: |
+          git config --global user.name "github-actions"
+          git config --global user.email "github-actions@github.com"
+          git add script.min.js
+          git commit -m "Minify JavaScript"
+          git push
