@@ -3,12 +3,12 @@ const ctx = canvas.getContext("2d");
 
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
-let mouse = {
+let cursor = {
   x: 0,  // Set x to 0 (top-left)
   y: 0   // Set y to 0 (top-left)
 };
 
-let mouse = {
+let cursor = {
   x: canvas.width / 2,
   y: canvas.height / 2
 };
