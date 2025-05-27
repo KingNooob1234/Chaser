@@ -211,7 +211,7 @@ function applyBlockEffect(block) {
   }
 
   // Check for win mode trigger:
-  if (activePowerUps.shield && activePowerUps.paint) {
+  if (activePowerUps.paint) {
     if (block.type === "swap" || block.type === "teleport") {
       triggerWinMode();
     }
