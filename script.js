@@ -13,10 +13,12 @@ let chaser = {
   x: 100,
   y: 100,
   radius: 20,
-  speed: 0.05
+  speed: 0.05,
+  maxSpeed: 0.5,     // maximum speed limit
+  speedIncrement: 0.005  // how much speed increases each interval
 };
 
-// Resize canvas if window changes
+// Resize canvas on window size change
 window.addEventListener("resize", () => {
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
@@ -28,6 +30,14 @@ window.addEventListener("mousemove", (e) => {
   mouse.y = e.clientY;
 });
 
+// Speed up every 3 seconds
+setInterval(() => {
+  if (chaser.speed < chaser.maxSpeed) {
+    chaser.speed += chaser.speedIncrement;
+    console.log("Speed increased to:", chaser.speed.toFixed(3));
+  }
+}, 3000); // increase speed every 3 seconds
+
 function update() {
   // Move chaser toward mouse
   chaser.x += (mouse.x - chaser.x) * chaser.speed;
@@ -35,7 +45,6 @@ function update() {
 }
 
 function draw() {
-  // Clear screen
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
   // Draw chaser
@@ -44,13 +53,6 @@ function draw() {
   ctx.fillStyle = "red";
   ctx.fill();
   ctx.closePath();
-
-  // Optionally draw mouse position
-  // ctx.beginPath();
-  // ctx.arc(mouse.x, mouse.y, 5, 0, Math.PI * 2);
-  // ctx.fillStyle = "white";
-  // ctx.fill();
-  // ctx.closePath();
 }
 
 function gameLoop() {
