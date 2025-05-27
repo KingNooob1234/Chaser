@@ -5,8 +5,8 @@ canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
 let mouse = {
-  x: canvas.width / 2,
-  y: canvas.height / 2
+  x: 0,  // Set x to 0 (top-left corner)
+  y: 0   // Set y to 0 (top-left corner)
 };
 
 let chaser = {
