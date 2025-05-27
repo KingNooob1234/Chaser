@@ -3,10 +3,6 @@ const ctx = canvas.getContext("2d");
 
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
-let cursor = {
-  x: 0,  // Set x to 0 (top-left)
-  y: 0   // Set y to 0 (top-left)
-};
 
 let cursor = {
   x: canvas.width / 2,
@@ -53,9 +49,9 @@ let ballBroken = false;
 
 // Track active power-ups for endgame
 let activePowerUps = {
-  shield: true,
+  shield: false,
   paint: false,
-  teleport: true
+  teleport: false
 };
 
 // Spawn paintbrush power-up every 30 seconds (lasts 3s)
@@ -215,7 +211,7 @@ function applyBlockEffect(block) {
   }
 
   // Check for win mode trigger:
-  if (activePowerUps.shield && activePowerUps.paint && activePowerUps.teleport) {
+  if (activePowerUps.shield && activePowerUps.paint) {
     if (block.type === "swap" || block.type === "teleport") {
       triggerWinMode();
     }
