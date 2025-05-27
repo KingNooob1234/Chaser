@@ -53,9 +53,9 @@ let ballBroken = false;
 
 // Track active power-ups for endgame
 let activePowerUps = {
-  shield: false,
+  shield: true,
   paint: false,
-  teleport: false
+  teleport: true
 };
 
 // Spawn paintbrush power-up every 30 seconds (lasts 3s)
