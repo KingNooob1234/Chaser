@@ -14,11 +14,13 @@ let chaser = {
   y: 100,
   radius: 20,
   speed: 0.05,
-  maxSpeed: 0.5,     // maximum speed limit
-  speedIncrement: 0.005  // how much speed increases each interval
+  maxSpeed: 0.5,
+  speedIncrement: 0.005
 };
 
-// Resize canvas on window size change
+let score = 0;
+
+// Resize canvas if window changes
 window.addEventListener("resize", () => {
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
@@ -30,13 +32,17 @@ window.addEventListener("mousemove", (e) => {
   mouse.y = e.clientY;
 });
 
-// Speed up every 3 seconds
+// Increase chaser speed every 3 seconds
 setInterval(() => {
   if (chaser.speed < chaser.maxSpeed) {
     chaser.speed += chaser.speedIncrement;
-    console.log("Speed increased to:", chaser.speed.toFixed(3));
   }
-}, 3000); // increase speed every 3 seconds
+}, 3000);
+
+// Increase score every second
+setInterval(() => {
+  score += 1;
+}, 1000);
 
 function update() {
   // Move chaser toward mouse
@@ -53,6 +59,11 @@ function draw() {
   ctx.fillStyle = "red";
   ctx.fill();
   ctx.closePath();
+
+  // Draw score
+  ctx.fillStyle = "white";
+  ctx.font = "24px Arial";
+  ctx.fillText(`Score: ${score}`, 20, 40);
 }
 
 function gameLoop() {
