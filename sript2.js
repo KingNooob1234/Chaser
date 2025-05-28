@@ -4,72 +4,38 @@ const ctx = canvas.getContext("2d");
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
-let cursor = {
+let keys = {
+  up: false,
+  down: false,
+  left: false,
+  right: false
+};
+
+const cursorSpeed = 5; // Pixels per frame
+
+window.addEventListener("keydown", (e) => {
+  if (e.key === "ArrowUp" || e.key === "w") keys.up = true;
+  if (e.key === "ArrowDown" || e.key === "s") keys.down = true;
+  if (e.key === "ArrowLeft" || e.key === "a") keys.left = true;
+  if (e.key === "ArrowRight" || e.key === "d") keys.right = true;
+});
+
+window.addEventListener("keyup", (e) => {
+  if (e.key === "ArrowUp" || e.key === "w") keys.up = false;
+  if (e.key === "ArrowDown" || e.key === "s") keys.down = false;
+  if (e.key === "ArrowLeft" || e.key === "a") keys.left = false;
+  if (e.key === "ArrowRight" || e.key === "d") keys.right = false;
+});
+
+
+let mouse = {
   x: canvas.width / 2,
   y: canvas.height / 2
 };
 
-// Movement variables for cursor
-let moveUp = false;
-let moveDown = false;
-let moveLeft = false;
-let moveRight = false;
-
-// Listen for arrow key inputs to control the cursor
-window.addEventListener("keydown", (e) => {
-  if (!gameOver && !beatGame) {
-    switch (e.key) {
-      case 'ArrowUp':
-        moveUp = true;
-        break;
-      case 'ArrowDown':
-        moveDown = true;
-        break;
-      case 'ArrowLeft':
-        moveLeft = true;
-        break;
-      case 'ArrowRight':
-        moveRight = true;
-        break;
-    }
-  }
-});
-
-window.addEventListener("keyup", (e) => {
-  switch (e.key) {
-    case 'ArrowUp':
-      moveUp = false;
-      break;
-    case 'ArrowDown':
-      moveDown = false;
-      break;
-    case 'ArrowLeft':
-      moveLeft = false;
-      break;
-    case 'ArrowRight':
-      moveRight = false;
-      break;
-  }
-});
-
-// Function to update cursor position based on arrow key presses
-function updateCursorPosition() {
-  const moveAmount = 10; // Amount by which the cursor moves
-
-  if (moveUp) mouse.y -= moveAmount;
-  if (moveDown) mouse.y += moveAmount;
-  if (moveLeft) mouse.x -= moveAmount;
-  if (moveRight) mouse.x += moveAmount;
-
-  // Ensure the cursor stays within the bounds of the canvas
-  mouse.x = Math.max(0, Math.min(canvas.width, mouse.x));
-  mouse.y = Math.max(0, Math.min(canvas.height, mouse.y));
-}
-
-
 let chaser = {
-  x: canvas.width / 2,
-  y: canvas.height / 2,
+  x: 100,
+  y: 100,
   radius: 20,
   speed: 0.05,
   speedIncrement: 0.005
@@ -104,13 +70,6 @@ let fakeCursors = [];
 let clickCount = 0;
 let ballCracked = false;
 let ballBroken = false;
-
-// Track active power-ups for endgame
-let activePowerUps = {
-  shield: false,
-  paint: false,
-  teleport: false
-};
 
 // Spawn paintbrush power-up every 30 seconds (lasts 3s)
 setInterval(() => {
@@ -235,7 +194,6 @@ function applyBlockEffect(block) {
     case "teleport":
       mouse.x = Math.random() * canvas.width;
       mouse.y = Math.random() * canvas.height;
-      activePowerUps.teleport = true;
       break;
     case "swap":
       [mouse.x, chaser.x] = [chaser.x, mouse.x];
@@ -251,25 +209,19 @@ function applyBlockEffect(block) {
       break;
     case "shield":
       shieldActive = true;
-      activePowerUps.shield = true;
-      setTimeout(() => {
-        shieldActive = false;
-        activePowerUps.shield = false;
-      }, 8000);
+      setTimeout(() => (shieldActive = false), 8000);
       break;
     case "paint":
       paintMode = true;
-      activePowerUps.paint = true;
       paintStartTime = Date.now();
       setTimeout(() => {
         paintMode = false;
-        activePowerUps.paint = false;
       }, 5000);
       break;
   }
 
   // Check for win mode trigger:
-  if (activePowerUps.paint) {
+  if (paintMode) {
     if (block.type === "swap" || block.type === "teleport") {
       triggerWinMode();
     }
@@ -283,19 +235,10 @@ function triggerWinMode() {
   ballCracked = false;
   ballBroken = false;
 
-  const numCursors = 12; // Number of fake cursors
-  const radius = 150; // Radius of the circle where cursors will be placed
-  const centerX = canvas.width / 2;
-  const centerY = canvas.height / 2;
-
-  for (let i = 0; i < numCursors; i++) {
-    const angle = (i / numCursors) * Math.PI * 2;
-    const x = centerX + radius * Math.cos(angle);
-    const y = centerY + radius * Math.sin(angle);
-
+  for (let i = 0; i < 20; i++) {
     fakeCursors.push({
-      x: x,
-      y: y,
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height,
       clicked: false
     });
   }
@@ -333,6 +276,18 @@ function update() {
 
   // Remove old paint
   paints = paints.filter(p => Date.now() - p.createdAt < 10000);
+
+  // Move cursor with keyboard
+if (!gameOver && !beatGame) {
+  if (keys.up) mouse.y -= cursorSpeed;
+  if (keys.down) mouse.y += cursorSpeed;
+  if (keys.left) mouse.x -= cursorSpeed;
+  if (keys.right) mouse.x += cursorSpeed;
+
+  // Clamp cursor position inside canvas
+  mouse.x = Math.max(0, Math.min(canvas.width, mouse.x));
+  mouse.y = Math.max(0, Math.min(canvas.height, mouse.y));
+}
 
   // Move chaser towards cursor if visible
   if (cursorVisible) {
@@ -470,12 +425,24 @@ function draw() {
       ctx.fillStyle = cursor.clicked ? "white" : "gray";
       ctx.fill();
       ctx.closePath();
+
+      ctx.font = "16px Arial";
+      ctx.fillStyle = "yellow";
+      ctx.fillText("Click!", cursor.x + 10, cursor.y);
     });
 
     ctx.fillStyle = "white";
-    ctx.font = "48px Arial";
+    ctx.font = "32px Arial";
     ctx.textAlign = "center";
-    ctx.fillText("CLICK!", canvas.width / 2, canvas.height / 2);
+
+    if (ballBroken) {
+      ctx.fillText("🎉 YOU WON! 🎉", canvas.width / 2, canvas.height / 2);
+    } else if (ballCracked) {
+      ctx.fillText("The Ball Is Cracking...", canvas.width / 2, canvas.height / 2);
+    } else {
+      ctx.fillText("Click with the Cursors!", canvas.width / 2, canvas.height / 2 - 30);
+      ctx.fillText(`Clicks: ${clickCount}`, canvas.width / 2, canvas.height / 2 + 10);
+    }
   }
 }
 
