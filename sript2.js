@@ -11,7 +11,7 @@ let keys = {
   right: false
 };
 
-const cursorSpeed = 5; // Pixels per frame
+const cursorSpeed = 8; // Pixels per frame
 
 window.addEventListener("keydown", (e) => {
   if (e.key === "ArrowUp" || e.key === "w") keys.up = true;
