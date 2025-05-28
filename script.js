@@ -255,14 +255,23 @@ function update() {
 
   // Move chaser towards cursor if visible
   if (cursorVisible) {
-    const nextX = chaser.x + (mouse.x - chaser.x) * chaser.speed;
-const nextY = chaser.y + (mouse.y - chaser.y) * chaser.speed;
+   const dx = mouse.x - chaser.x;
+const dy = mouse.y - chaser.y;
+const distance = Math.hypot(dx, dy);
 
-const dx = nextX - chaser.x;
-const dy = nextY - chaser.y;
+if (distance > 1) { // avoid jittering when very close
+  const vx = (dx / distance) * chaser.speed;
+  const vy = (dy / distance) * chaser.speed;
 
-chaser.x += dx;
-chaser.y += dy;
+  chaser.x += vx;
+  chaser.y += vy;
+
+  if (checkPaintCollision()) {
+    chaser.x -= vx;
+    chaser.y -= vy;
+  }
+}
+
 
     if (checkPaintCollision()) {
       // Bounce back if hitting paint
