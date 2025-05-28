@@ -256,13 +256,13 @@ function update() {
   // Move chaser towards cursor if visible
   if (cursorVisible) {
     const nextX = chaser.x + (mouse.x - chaser.x) * chaser.speed;
-    const nextY = chaser.y + (mouse.y - chaser.y) * chaser.speed;
+const nextY = chaser.y + (mouse.y - chaser.y) * chaser.speed;
 
-    const dx = nextX - chaser.x;
-    const dy = nextY - chaser.y;
+const dx = nextX - chaser.x;
+const dy = nextY - chaser.y;
 
-    chaser.x += dx;
-    chaser.y += dy;
+chaser.x += dx;
+chaser.y += dy;
 
     if (checkPaintCollision()) {
       // Bounce back if hitting paint
