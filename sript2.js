@@ -119,15 +119,15 @@ window.addEventListener("resize", () => {
   canvas.height = window.innerHeight;
 });
 
-//window.addEventListener("mousemove", (e) => {
- // if (!gameOver && !beatGame) {
-    //mouse.x = e.clientX;
-    //mouse.y = e.clientY;
-    //if (paintMode && isDrawing) {
-    //  currentPaint.push({ x: e.clientX, y: e.clientY });
-   // }
- // }
-//});
+window.addEventListener("mousemove", (e) => {
+  if (!gameOver && !beatGame) {
+    mouse.x = e.clientX;
+    mouse.y = e.clientY;
+    if (paintMode && isDrawing) {
+      currentPaint.push({ x: e.clientX, y: e.clientY });
+    }
+ }
+});
 
 window.addEventListener("mousedown", () => {
   if (paintMode && !gameOver && !beatGame) {
