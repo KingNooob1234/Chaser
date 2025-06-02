@@ -125,7 +125,7 @@ window.addEventListener("mousemove", (e) => {
     if (paintMode && isDrawing) {
       currentPaint.push({ x: e.clientX, y: e.clientY });
     }
- }
+  }
 });
 
 window.addEventListener("mousedown", () => {
@@ -189,10 +189,9 @@ function checkPaintCollision() {
 function applyBlockEffect(block) {
   if (beatGame || gameOver) return;
 
-  // If already in paint mode and picked up any other power-up, start end sequence
+  // If paint mode active and power-up other than paint is used => trigger end sequence
   if (paintMode && block.type !== "paint") {
     triggerWinMode();
-    return;
   }
 
   switch (block.type) {
@@ -294,7 +293,7 @@ function update() {
     const distance = Math.hypot(dx, dy);
 
     if (distance > 1) { // Avoid jitter when extremely close
-      const moveX = (dx / distance) * chaser.speed * 60; // 60 is approximate FPS
+      const moveX = (dx / distance) * chaser.speed * 60; // 60 approx FPS
       const moveY = (dy / distance) * chaser.speed * 60;
 
       chaser.x += moveX;
@@ -318,6 +317,8 @@ function update() {
   if (checkCollision()) {
     if (shieldActive) {
       shieldActive = false;
+      mouse.x = Math.random() * canvas.width;
+      mouse.y = Math.random() * canvas.height;
     } else {
       gameOver = true;
       clearInterval(scoreInterval);
@@ -371,6 +372,20 @@ function drawPaint() {
 function draw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+  if (gameOver) {
+    // Draw game over screen
+    ctx.fillStyle = "black";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    ctx.fillStyle = "white";
+    ctx.font = "48px Arial";
+    ctx.textAlign = "center";
+    ctx.fillText("GAME OVER", canvas.width / 2, canvas.height / 2 - 40);
+    ctx.font = "32px Arial";
+    ctx.fillText(`Final Score: ${score}`, canvas.width / 2, canvas.height / 2);
+    return;
+  }
+
   drawPaint();
   drawBlocks();
 
@@ -378,7 +393,6 @@ function draw() {
   ctx.beginPath();
   ctx.arc(chaser.x, chaser.y, chaser.radius, 0, Math.PI * 2);
   if (ballBroken) {
-    // Broken ball - draw as shattered (simple)
     ctx.fillStyle = "gray";
     ctx.fill();
     ctx.strokeStyle = "black";
@@ -415,65 +429,55 @@ function draw() {
     ctx.fillText("PAINT MODE!", 20, 70);
   }
 
-  if (gameOver) {
-    ctx.fillStyle = "white";
-    ctx.font = "48px Arial";
-    ctx.textAlign = "center";
-    ctx.fillText("GAME OVER", canvas.width / 2, canvas.height / 2 - 40);
-    ctx.font = "32px Arial";
-    ctx.fillText(`Final Score: ${score}`, canvas.width / 2, canvas.height / 2);
-  }
-
-  // Win mode UI
   if (beatGame) {
-    fakeCursors.forEach(cursor => {
-      ctx.beginPath();
-      ctx.arc(cursor.x, cursor.y, 8, 0, Math.PI * 2);
-      ctx.fillStyle = cursor.clicked ? "white" : "gray";
-      ctx.fill();
-      ctx.closePath();
-
-      ctx.font = "16px Arial";
-      ctx.fillStyle = "yellow";
-      ctx.fillText("Click!", cursor.x + 10, cursor.y);
-    });
-
     ctx.fillStyle = "white";
     ctx.font = "32px Arial";
     ctx.textAlign = "center";
+    ctx.fillText("You Win! Click to break the ball!", canvas.width / 2, 80);
 
-    if (ballBroken) {
-      ctx.fillText("🎉 YOU WON! 🎉", canvas.width / 2, canvas.height / 2);
-    } else if (ballCracked) {
-      ctx.fillText("The Ball Is Cracking...", canvas.width / 2, canvas.height / 2);
-    } else {
-      ctx.fillText("Click with the Cursors!", canvas.width / 2, canvas.height / 2 - 30);
-      ctx.fillText(`Clicks: ${clickCount}`, canvas.width / 2, canvas.height / 2 + 10);
-    }
+    fakeCursors.forEach(c => {
+      ctx.beginPath();
+      ctx.arc(c.x, c.y, 5, 0, Math.PI * 2);
+      ctx.fillStyle = c.clicked ? "lightblue" : "white";
+      ctx.fill();
+    });
   }
 }
 
 function showRestartButton() {
-  const button = document.createElement("button");
-  button.innerText = "Restart";
-  button.style.position = "absolute";
-  button.style.top = "65%";
-  button.style.left = "50%";
-  button.style.transform = "translate(-50%, -50%)";
-  button.style.padding = "15px 30px";
-  button.style.fontSize = "20px";
-  button.style.cursor = "pointer";
-  document.body.appendChild(button);
+  let btn = document.getElementById("restartBtn");
+  if (!btn) {
+    btn = document.createElement("button");
+    btn.id = "restartBtn";
+    btn.innerText = "Restart";
+    btn.style.position = "fixed";
+    btn.style.top = "50%";
+    btn.style.left = "50%";
+    btn.style.transform = "translate(-50%, -50%)";
+    btn.style.fontSize = "24px";
+    btn.style.padding = "12px 24px";
+    btn.style.cursor = "pointer";
+    btn.style.zIndex = "1000";
+    document.body.appendChild(btn);
 
-  button.addEventListener("click", () => {
-    location.reload();
-  });
+    btn.addEventListener("click", () => {
+      location.reload();
+    });
+  }
+  btn.style.display = "block";
 }
 
+function hideRestartButton() {
+  const btn = document.getElementById("restartBtn");
+  if (btn) btn.style.display = "none";
+}
+
+// Start the game loop
 function gameLoop() {
   update();
   draw();
   requestAnimationFrame(gameLoop);
 }
 
+hideRestartButton();
 gameLoop();
