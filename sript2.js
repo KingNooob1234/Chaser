@@ -11,7 +11,7 @@ let keys = {
   right: false
 };
 
-const cursorSpeed = 8; // Pixels per frame
+const cursorSpeed = 8;
 
 window.addEventListener("keydown", (e) => {
   if (e.key === "ArrowUp" || e.key === "w") keys.up = true;
@@ -42,17 +42,18 @@ let chaser = {
 
 let score = 0;
 let gameOver = false;
-
 let shieldActive = false;
 let stealthActive = false;
 let cursorVisible = true;
-
 let paintMode = false;
-let paintStartTime = 0;
 let paints = [];
-
 let isDrawing = false;
 let currentPaint = [];
+let beatGame = false;
+let fakeCursors = [];
+let clickCount = 0;
+let ballCracked = false;
+let ballBroken = false;
 
 const blockTypes = [
   { type: "teleport", color: "cyan" },
@@ -63,14 +64,6 @@ const blockTypes = [
 
 let blocks = [];
 
-// Win mode variables
-let beatGame = false;
-let fakeCursors = [];
-let clickCount = 0;
-let ballCracked = false;
-let ballBroken = false;
-
-// Spawn paintbrush power-up every 30 seconds (lasts 3s)
 setInterval(() => {
   if (!gameOver && !beatGame) {
     blocks.push({
@@ -85,7 +78,6 @@ setInterval(() => {
   }
 }, 30000);
 
-// Spawn regular power-ups every 4 seconds
 setInterval(() => {
   if (!gameOver && !beatGame) {
     const block = {
@@ -99,14 +91,12 @@ setInterval(() => {
   }
 }, 4000);
 
-// Speed up chaser every 3 seconds
 let speedInterval = setInterval(() => {
   if (!gameOver && !beatGame) {
     chaser.speed += chaser.speedIncrement;
   }
 }, 3000);
 
-// Increase score every second
 let scoreInterval = setInterval(() => {
   if (!gameOver && !beatGame) {
     score++;
@@ -118,46 +108,8 @@ window.addEventListener("resize", () => {
   canvas.height = window.innerHeight;
 });
 
-window.addEventListener("mousemove", (e) => {
-  if (!gameOver && !beatGame) {
-    mouse.x = e.clientX;
-    mouse.y = e.clientY;
-    if (paintMode && isDrawing) {
-      currentPaint.push({ x: e.clientX, y: e.clientY });
-    }
-  }
-});
-
-window.addEventListener("mousedown", () => {
-  if (paintMode && !gameOver && !beatGame) {
-    isDrawing = true;
-    currentPaint = [];
-  }
-});
-
-window.addEventListener("mouseup", () => {
-  if (paintMode && isDrawing && !gameOver && !beatGame) {
-    isDrawing = false;
-    if (currentPaint.length > 1) {
-      paints.push({
-        path: currentPaint,
-        createdAt: Date.now()
-      });
-    }
-  }
-});
-
 function getDistance(x1, y1, x2, y2) {
   return Math.hypot(x2 - x1, y2 - y1);
-}
-
-function closestPointOnLine(px, py, p1, p2) {
-  const dx = p2.x - p1.x;
-  const dy = p2.y - p1.y;
-  const lenSq = dx * dx + dy * dy;
-  let t = ((px - p1.x) * dx + (py - p1.y) * dy) / lenSq;
-  t = Math.max(0, Math.min(1, t));
-  return { x: p1.x + t * dx, y: p1.y + t * dy };
 }
 
 function checkCollision() {
@@ -170,26 +122,9 @@ function checkBlockCollision(block) {
   return getDistance(mouse.x, mouse.y, block.x, block.y) < block.size + 5;
 }
 
-function checkPaintCollision() {
-  for (const paint of paints) {
-    const path = paint.path;
-    for (let i = 1; i < path.length; i++) {
-      const p1 = path[i - 1];
-      const p2 = path[i];
-      const closest = closestPointOnLine(chaser.x, chaser.y, p1, p2);
-      const dist = getDistance(chaser.x, chaser.y, closest.x, closest.y);
-      if (dist < chaser.radius) {
-        return true;
-      }
-    }
-  }
-  return false;
-}
-
 function applyBlockEffect(block) {
   if (beatGame || gameOver) return;
 
-  // If paint mode active and power-up other than paint is used => trigger end sequence
   if (paintMode && block.type !== "paint") {
     triggerWinMode();
   }
@@ -217,7 +152,6 @@ function applyBlockEffect(block) {
       break;
     case "paint":
       paintMode = true;
-      paintStartTime = Date.now();
       setTimeout(() => {
         paintMode = false;
       }, 5000);
@@ -229,9 +163,6 @@ function triggerWinMode() {
   beatGame = true;
   fakeCursors = [];
   clickCount = 0;
-  ballCracked = false;
-  ballBroken = false;
-
   for (let i = 0; i < 20; i++) {
     fakeCursors.push({
       x: Math.random() * canvas.width,
@@ -239,7 +170,6 @@ function triggerWinMode() {
       clicked: false
     });
   }
-
   document.addEventListener("click", handleWinClick);
 }
 
@@ -247,14 +177,9 @@ function handleWinClick() {
   if (!beatGame || ballBroken) return;
 
   clickCount++;
-
-  // All fake cursors "click" with you
   fakeCursors.forEach(c => (c.clicked = true));
 
-  if (clickCount === 5) {
-    ballCracked = true;
-  }
-
+  if (clickCount === 5) ballCracked = true;
   if (clickCount >= 10) {
     ballBroken = true;
     document.removeEventListener("click", handleWinClick);
@@ -264,56 +189,27 @@ function handleWinClick() {
 function update() {
   if (gameOver || beatGame) return;
 
-  // Expire paintbrush blocks
-  blocks.forEach((b) => {
-    if (b.type === "paint" && b.expiresAt && Date.now() > b.expiresAt) {
-      b.active = false;
-    }
-  });
+  // Keyboard movement
+  if (keys.up) mouse.y -= cursorSpeed;
+  if (keys.down) mouse.y += cursorSpeed;
+  if (keys.left) mouse.x -= cursorSpeed;
+  if (keys.right) mouse.x += cursorSpeed;
 
-  // Remove old paint
-  paints = paints.filter(p => Date.now() - p.createdAt < 10000);
+  mouse.x = Math.max(0, Math.min(canvas.width, mouse.x));
+  mouse.y = Math.max(0, Math.min(canvas.height, mouse.y));
 
-  // Move cursor with keyboard
-  if (!gameOver && !beatGame) {
-    if (keys.up) mouse.y -= cursorSpeed;
-    if (keys.down) mouse.y += cursorSpeed;
-    if (keys.left) mouse.x -= cursorSpeed;
-    if (keys.right) mouse.x += cursorSpeed;
-
-    // Clamp cursor position inside canvas
-    mouse.x = Math.max(0, Math.min(canvas.width, mouse.x));
-    mouse.y = Math.max(0, Math.min(canvas.height, mouse.y));
+  // Chaser movement
+  const dx = mouse.x - chaser.x;
+  const dy = mouse.y - chaser.y;
+  const distance = Math.hypot(dx, dy);
+  if (distance > 1) {
+    const moveX = (dx / distance) * chaser.speed * 60;
+    const moveY = (dy / distance) * chaser.speed * 60;
+    chaser.x += moveX;
+    chaser.y += moveY;
   }
 
-  // Move chaser towards cursor if visible
-  if (cursorVisible) {
-    const dx = mouse.x - chaser.x;
-    const dy = mouse.y - chaser.y;
-    const distance = Math.hypot(dx, dy);
-
-    if (distance > 1) { // Avoid jitter when extremely close
-      const moveX = (dx / distance) * chaser.speed * 60; // 60 approx FPS
-      const moveY = (dy / distance) * chaser.speed * 60;
-
-      chaser.x += moveX;
-      chaser.y += moveY;
-
-      if (checkPaintCollision()) {
-        // Bounce back if hitting paint
-        chaser.x -= moveX;
-        chaser.y -= moveY;
-      }
-    }
-
-    if (checkPaintCollision()) {
-      // Bounce back if hitting paint
-      chaser.x -= dx;
-      chaser.y -= dy;
-    }
-  }
-
-  // Check collision with cursor
+  // Collision with player
   if (checkCollision()) {
     if (shieldActive) {
       shieldActive = false;
@@ -327,7 +223,6 @@ function update() {
     }
   }
 
-  // Check collisions with power-up blocks
   blocks.forEach(block => {
     if (block.active && checkBlockCollision(block)) {
       block.active = false;
@@ -336,13 +231,12 @@ function update() {
   });
 }
 
-function drawCursorEffect() {
+function drawCursor() {
   if (!cursorVisible) return;
   ctx.beginPath();
   ctx.arc(mouse.x, mouse.y, 6, 0, Math.PI * 2);
   ctx.fillStyle = shieldActive ? "blue" : "white";
   ctx.fill();
-  ctx.closePath();
 }
 
 function drawBlocks() {
@@ -354,29 +248,19 @@ function drawBlocks() {
   });
 }
 
-function drawPaint() {
-  paints.forEach(paint => {
-    ctx.beginPath();
-    const path = paint.path;
-    ctx.moveTo(path[0].x, path[0].y);
-    for (let i = 1; i < path.length; i++) {
-      ctx.lineTo(path[i].x, path[i].y);
-    }
-    ctx.strokeStyle = "orange";
-    ctx.lineWidth = 8;
-    ctx.lineCap = "round";
-    ctx.stroke();
-  });
+function drawChaser() {
+  ctx.beginPath();
+  ctx.arc(chaser.x, chaser.y, chaser.radius, 0, Math.PI * 2);
+  ctx.fillStyle = ballBroken ? "gray" : ballCracked ? "darkred" : "red";
+  ctx.fill();
 }
 
 function draw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
   if (gameOver) {
-    // Draw game over screen
     ctx.fillStyle = "black";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-
     ctx.fillStyle = "white";
     ctx.font = "48px Arial";
     ctx.textAlign = "center";
@@ -386,41 +270,12 @@ function draw() {
     return;
   }
 
-  drawPaint();
   drawBlocks();
-
-  // Draw chaser (with cracks if cracked/broken)
-  ctx.beginPath();
-  ctx.arc(chaser.x, chaser.y, chaser.radius, 0, Math.PI * 2);
-  if (ballBroken) {
-    ctx.fillStyle = "gray";
-    ctx.fill();
-    ctx.strokeStyle = "black";
-    ctx.lineWidth = 4;
-    ctx.moveTo(chaser.x - 10, chaser.y - 10);
-    ctx.lineTo(chaser.x + 10, chaser.y + 10);
-    ctx.moveTo(chaser.x + 10, chaser.y - 10);
-    ctx.lineTo(chaser.x - 10, chaser.y + 10);
-    ctx.stroke();
-  } else if (ballCracked) {
-    ctx.fillStyle = "darkred";
-    ctx.fill();
-    ctx.strokeStyle = "black";
-    ctx.lineWidth = 3;
-    ctx.moveTo(chaser.x - 5, chaser.y);
-    ctx.lineTo(chaser.x + 5, chaser.y);
-    ctx.stroke();
-  } else {
-    ctx.fillStyle = "red";
-    ctx.fill();
-  }
-  ctx.closePath();
-
-  drawCursorEffect();
+  drawCursor();
+  drawChaser();
 
   ctx.fillStyle = "white";
   ctx.font = "24px Arial";
-  ctx.textAlign = "left";
   ctx.fillText(`Score: ${score}`, 20, 40);
 
   if (paintMode) {
@@ -441,6 +296,14 @@ function draw() {
       ctx.fillStyle = c.clicked ? "lightblue" : "white";
       ctx.fill();
     });
+
+    if (ballCracked && !ballBroken) {
+      ctx.fillText("The Ball is Cracking!", canvas.width / 2, 130);
+    }
+
+    if (ballBroken) {
+      ctx.fillText("🎉 YOU WON! 🎉", canvas.width / 2, 180);
+    }
   }
 }
 
@@ -467,17 +330,10 @@ function showRestartButton() {
   btn.style.display = "block";
 }
 
-function hideRestartButton() {
-  const btn = document.getElementById("restartBtn");
-  if (btn) btn.style.display = "none";
-}
-
-// Start the game loop
 function gameLoop() {
   update();
   draw();
   requestAnimationFrame(gameLoop);
 }
 
-hideRestartButton();
 gameLoop();
