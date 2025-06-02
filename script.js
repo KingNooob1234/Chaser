@@ -204,6 +204,20 @@ function applyBlockEffect(block) {
   }
 }
 
+let chaser = {
+  x: 100,
+  y: 100,
+  radius: 20,
+  speed: 2.5, // pixels per frame
+  speedIncrement: 0.2
+};
+
+let speedInterval = setInterval(() => {
+  if (!gameOver && !beatGame) {
+    chaser.speed += chaser.speedIncrement;
+  }
+}, 3000);
+
 function triggerWinMode() {
   beatGame = true;
   fakeCursors = [];

@@ -291,14 +291,24 @@ if (!gameOver && !beatGame) {
 
   // Move chaser towards cursor if visible
   if (cursorVisible) {
-    const nextX = chaser.x + (mouse.x - chaser.x) * chaser.speed;
-    const nextY = chaser.y + (mouse.y - chaser.y) * chaser.speed;
+    const dx = mouse.x - chaser.x;
+const dy = mouse.y - chaser.y;
+const distance = Math.hypot(dx, dy);
 
-    const dx = nextX - chaser.x;
-    const dy = nextY - chaser.y;
+if (distance > 1) { // Avoid jitter when extremely close
+  const moveX = (dx / distance) * chaser.speed * 60; // 60 is an approximate FPS
+  const moveY = (dy / distance) * chaser.speed * 60;
 
-    chaser.x += dx;
-    chaser.y += dy;
+  chaser.x += moveX;
+  chaser.y += moveY;
+
+  if (checkPaintCollision()) {
+    // Bounce back if hitting paint
+    chaser.x -= moveX;
+    chaser.y -= moveY;
+  }
+}
+
 
     if (checkPaintCollision()) {
       // Bounce back if hitting paint
