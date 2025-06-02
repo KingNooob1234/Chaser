@@ -36,8 +36,8 @@ let chaser = {
   x: 100,
   y: 100,
   radius: 20,
-  speed: 4,          // Increased base speed for smoother movement
-  speedIncrement: 0.2 // Increment per 3 seconds
+  speed: 0.05,
+  speedIncrement: 0.005
 };
 
 let score = 0;
@@ -189,6 +189,12 @@ function checkPaintCollision() {
 function applyBlockEffect(block) {
   if (beatGame || gameOver) return;
 
+  // If paintMode is active and you get any other powerup, trigger end sequence
+  if (paintMode && block.type !== "paint") {
+    triggerWinMode();
+    return;
+  }
+
   switch (block.type) {
     case "teleport":
       mouse.x = Math.random() * canvas.width;
@@ -217,13 +223,6 @@ function applyBlockEffect(block) {
         paintMode = false;
       }, 5000);
       break;
-  }
-
-  // Check for win mode trigger:
-  if (paintMode) {
-    if (block.type === "swap" || block.type === "teleport") {
-      triggerWinMode();
-    }
   }
 }
 
@@ -294,12 +293,9 @@ function update() {
     const dy = mouse.y - chaser.y;
     const distance = Math.hypot(dx, dy);
 
-    if (distance > 0) {
-      const maxMove = chaser.speed; // speed is already a pixel value per frame
-      const moveDist = Math.min(maxMove, distance);
-
-      const moveX = (dx / distance) * moveDist;
-      const moveY = (dy / distance) * moveDist;
+    if (distance > 1) { // Avoid jitter when extremely close
+      const moveX = (dx / distance) * chaser.speed * 60; // 60 is approximate FPS
+      const moveY = (dy / distance) * chaser.speed * 60;
 
       chaser.x += moveX;
       chaser.y += moveY;
@@ -310,12 +306,21 @@ function update() {
         chaser.y -= moveY;
       }
     }
+
+    if (checkPaintCollision()) {
+      // Bounce back if hitting paint
+      chaser.x -= dx;
+      chaser.y -= dy;
+    }
   }
 
   // Check collision with cursor
   if (checkCollision()) {
     if (shieldActive) {
+      // Shield breaks: teleport player randomly and remove shield
       shieldActive = false;
+      mouse.x = Math.random() * canvas.width;
+      mouse.y = Math.random() * canvas.height;
     } else {
       gameOver = true;
       clearInterval(scoreInterval);
@@ -427,46 +432,63 @@ function draw() {
     fakeCursors.forEach(cursor => {
       ctx.beginPath();
       ctx.arc(cursor.x, cursor.y, 8, 0, Math.PI * 2);
-      ctx.fillStyle = cursor.clicked ? "white" : "gray";
+      ctx.fillStyle = cursor.clicked ? "lime" : "white";
       ctx.fill();
       ctx.closePath();
-
-      ctx.font = "16px Arial";
-      ctx.fillStyle = "yellow";
-      ctx.fillText("Click!", cursor.x + 10, cursor.y);
     });
 
     ctx.fillStyle = "white";
     ctx.font = "32px Arial";
     ctx.textAlign = "center";
 
-    if (ballBroken) {
-      ctx.fillText("🎉 YOU WON! 🎉", canvas.width / 2, canvas.height / 2);
-    } else if (ballCracked) {
-      ctx.fillText("The Ball Is Cracking...", canvas.width / 2, canvas.height / 2);
-    } else {
-      ctx.fillText("Click with the Cursors!", canvas.width / 2, canvas.height / 2 - 30);
-      ctx.fillText(`Clicks: ${clickCount}`, canvas.width / 2, canvas.height / 2 + 10);
+    if (!ballCracked && !ballBroken) {
+      ctx.fillText("Click 5 times to crack the ball!", canvas.width / 2, 50);
+    } else if (ballCracked && !ballBroken) {
+      ctx.fillText("Click 5 more times to break it!", canvas.width / 2, 50);
+    } else if (ballBroken) {
+      ctx.fillText("You broke the ball! You win!", canvas.width / 2, 50);
     }
   }
 }
 
 function showRestartButton() {
-  const button = document.createElement("button");
-  button.innerText = "Restart";
-  button.style.position = "absolute";
-  button.style.top = "65%";
-  button.style.left = "50%";
-  button.style.transform = "translate(-50%, -50%)";
-  button.style.padding = "15px 30px";
-  button.style.fontSize = "20px";
-  button.style.background = "#fff";
-  button.style.color = "#111";
-  button.style.border = "none";
-  button.style.borderRadius = "10px";
-  button.style.cursor = "pointer";
-  button.onclick = () => location.reload();
-  document.body.appendChild(button);
+  const restartBtn = document.getElementById("restartBtn");
+  restartBtn.style.display = "block";
+  restartBtn.onclick = () => {
+    restartGame();
+    restartBtn.style.display = "none";
+  };
+}
+
+function restartGame() {
+  score = 0;
+  gameOver = false;
+  shieldActive = false;
+  stealthActive = false;
+  cursorVisible = true;
+  paintMode = false;
+  paints = [];
+  blocks = [];
+  chaser.x = 100;
+  chaser.y = 100;
+  chaser.speed = 0.05;
+  fakeCursors = [];
+  beatGame = false;
+  clickCount = 0;
+  ballCracked = false;
+  ballBroken = false;
+
+  scoreInterval = setInterval(() => {
+    if (!gameOver && !beatGame) {
+      score++;
+    }
+  }, 1000);
+
+  speedInterval = setInterval(() => {
+    if (!gameOver && !beatGame) {
+      chaser.speed += chaser.speedIncrement;
+    }
+  }, 3000);
 }
 
 function gameLoop() {
