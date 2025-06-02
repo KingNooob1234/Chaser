@@ -27,7 +27,6 @@ window.addEventListener("keyup", (e) => {
   if (e.key === "ArrowRight" || e.key === "d") keys.right = false;
 });
 
-
 let mouse = {
   x: canvas.width / 2,
   y: canvas.height / 2
@@ -190,6 +189,12 @@ function checkPaintCollision() {
 function applyBlockEffect(block) {
   if (beatGame || gameOver) return;
 
+  // If already in paint mode and picked up any other power-up, start end sequence
+  if (paintMode && block.type !== "paint") {
+    triggerWinMode();
+    return;
+  }
+
   switch (block.type) {
     case "teleport":
       mouse.x = Math.random() * canvas.width;
@@ -218,13 +223,6 @@ function applyBlockEffect(block) {
         paintMode = false;
       }, 5000);
       break;
-  }
-
-  // Check for win mode trigger:
-  if (paintMode) {
-    if (block.type === "swap" || block.type === "teleport") {
-      triggerWinMode();
-    }
   }
 }
 
@@ -278,37 +276,36 @@ function update() {
   paints = paints.filter(p => Date.now() - p.createdAt < 10000);
 
   // Move cursor with keyboard
-if (!gameOver && !beatGame) {
-  if (keys.up) mouse.y -= cursorSpeed;
-  if (keys.down) mouse.y += cursorSpeed;
-  if (keys.left) mouse.x -= cursorSpeed;
-  if (keys.right) mouse.x += cursorSpeed;
+  if (!gameOver && !beatGame) {
+    if (keys.up) mouse.y -= cursorSpeed;
+    if (keys.down) mouse.y += cursorSpeed;
+    if (keys.left) mouse.x -= cursorSpeed;
+    if (keys.right) mouse.x += cursorSpeed;
 
-  // Clamp cursor position inside canvas
-  mouse.x = Math.max(0, Math.min(canvas.width, mouse.x));
-  mouse.y = Math.max(0, Math.min(canvas.height, mouse.y));
-}
+    // Clamp cursor position inside canvas
+    mouse.x = Math.max(0, Math.min(canvas.width, mouse.x));
+    mouse.y = Math.max(0, Math.min(canvas.height, mouse.y));
+  }
 
   // Move chaser towards cursor if visible
   if (cursorVisible) {
     const dx = mouse.x - chaser.x;
-const dy = mouse.y - chaser.y;
-const distance = Math.hypot(dx, dy);
+    const dy = mouse.y - chaser.y;
+    const distance = Math.hypot(dx, dy);
 
-if (distance > 1) { // Avoid jitter when extremely close
-  const moveX = (dx / distance) * chaser.speed * 60; // 60 is an approximate FPS
-  const moveY = (dy / distance) * chaser.speed * 60;
+    if (distance > 1) { // Avoid jitter when extremely close
+      const moveX = (dx / distance) * chaser.speed * 60; // 60 is approximate FPS
+      const moveY = (dy / distance) * chaser.speed * 60;
 
-  chaser.x += moveX;
-  chaser.y += moveY;
+      chaser.x += moveX;
+      chaser.y += moveY;
 
-  if (checkPaintCollision()) {
-    // Bounce back if hitting paint
-    chaser.x -= moveX;
-    chaser.y -= moveY;
-  }
-}
-
+      if (checkPaintCollision()) {
+        // Bounce back if hitting paint
+        chaser.x -= moveX;
+        chaser.y -= moveY;
+      }
+    }
 
     if (checkPaintCollision()) {
       // Bounce back if hitting paint
@@ -465,13 +462,12 @@ function showRestartButton() {
   button.style.transform = "translate(-50%, -50%)";
   button.style.padding = "15px 30px";
   button.style.fontSize = "20px";
-  button.style.background = "#fff";
-  button.style.color = "#111";
-  button.style.border = "none";
-  button.style.borderRadius = "10px";
   button.style.cursor = "pointer";
-  button.onclick = () => location.reload();
   document.body.appendChild(button);
+
+  button.addEventListener("click", () => {
+    location.reload();
+  });
 }
 
 function gameLoop() {
